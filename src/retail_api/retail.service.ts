@@ -13,20 +13,20 @@ export class RetailService {
     this.axios = axios.create({
       baseURL: `${process.env.RETAIL_URL}/api/v5`,
       timeout: 10000,
-      headers: { },
+      headers: {},
     })
 
     this.axios.interceptors.request.use((config) => {
-      // console.log(config.url)
+      console.log(config.url)
       return config
     })
     this.axios.interceptors.response.use(
       (r) => {
-        // console.log("Result:", r.data)
+        console.log('Result:', r.data)
         return r
       },
       (r) => {
-        // console.log("Error:", r.response.data)
+        console.log('Error:', r.response.data)
         return r
       },
     )
@@ -34,7 +34,12 @@ export class RetailService {
 
   async orders(filter?: OrdersFilter): Promise<[Order[], RetailPagination]> {
     const params = serialize(filter, '')
-    const resp = await this.axios.get('/orders?' + params)
+
+    const resp = await this.axios.get('/orders?' + params, {
+      params: {
+        apiKey: process.env.RETAIL_KEY,
+      },
+    })
 
     if (!resp.data) throw new Error('RETAIL CRM ERROR')
 
@@ -45,9 +50,19 @@ export class RetailService {
   }
 
   async findOrder(id: string): Promise<Order | null> {
-
+    try {
+      const [orders] = await this.orders({
+        filter: {
+          numbers: [id],
+        },
+      })
+      return orders[0]
+    } catch (error) {
+      console.log('Error:', error)
+      return null
+    }
   }
-
+  /*
   async orderStatuses(): Promise<CrmType[]> {
 
   }
@@ -59,4 +74,5 @@ export class RetailService {
   async deliveryTypes(): Promise<CrmType[]> {
 
   }
+  */
 }
